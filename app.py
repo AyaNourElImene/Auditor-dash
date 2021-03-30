@@ -28,16 +28,14 @@ DATA_PATH = BASE_PATH.joinpath("data").resolve()
 
 
 # Read data
-ads= pd.read_csv(DATA_PATH.joinpath("ads.csv"))
-<<<<<<< HEAD
+# ads= pd.read_csv(DATA_PATH.joinpath("ads.csv"))
+ads= pd.read_json(DATA_PATH.joinpath("ads_data.json"))
+
 advertiser_list=ads["title"].unique().tolist()
-=======
-advertiser_list=ads['title'].unique().tolist()
->>>>>>> d3a323d74981c3dec8a69cf2ebb5efa4ee94b54c
-ads['label'] = ads['label'].map({'str_p':'Strong Political',
-                             'str_np':'Non-political',
-                             'p':'Political',
-                             'np':'Marginally Political'},
+ads['label'] = ads['label'].map({'str_p':'Strong Political (fraction=1)',
+                             'str_np':'Non-political (fraction=0 ) ',
+                             'p':'Political (1 < fraction <= 0.5)',
+                             'np':'Marginally Political  (0.5< fraction <0)'},
                              na_action=None)
 label_list=ads["label"].unique().tolist()  
 #ads['paid_for_by'] = ads['paid_for_by'].replace(['this is empty'],['None'])
@@ -46,7 +44,7 @@ paid_list=ads["paid_for_by"].unique().tolist()
 ads['fin_ctg'] = ads['fin_ctg'].replace(['disagreement','This ad is about environmental politics','This ad is about education','This ad is about civil and social rights','This ad is about health' , 'This ad is about economy' , 'This ad is about immigration', 'This ad is about security and foreign policy' , 'This ad is about crime', 'This ad is about political values and governance', 'This ad is about guns' ], ['Disagreement','Social Issue : Environmental Politics','Social Issue : Education','Social Issue : Civil and Social Rights','Social Issue : Health', 'Social Issue : Economy' , 'Social Issue : Immigration' , 'Social Issue : Security and Foreign Policy','Social Issue : Crime','Social Issue : Political Values and Governance', 'Social Issue : Guns'] )
 ctg_list=ads["fin_ctg"].unique().tolist()     
 
-ads["created_at"] = ads["created_at"].apply(lambda x: pd.Timestamp(x).strftime('%Y-%m-%d'))
+# ads["created_at"] = ads["created_at"].apply(lambda x: pd.Timestamp(x).strftime('%Y-%m-%d'))
 
 ads.fr=ads.fr*100
 ads.fr=ads.fr.apply(np.floor)
@@ -61,8 +59,8 @@ ads.loc[ads.paid_for_by != 'Yes','paid_for_by']='No'
 
 advcategory_list=ads['categories_1'].unique().tolist()
 
-data_columns = ['Ad message','Advertiser', 'Labeled as political by advertiser',  'Advertiser Webpage', 'Fration of political votes from citizens(%)']
-df_columns = ['text','title', 'paid_for_by', 'page', 'fr']
+data_columns = ['Ad message','Advertiser', 'Labeled as political by advertiser',  'Advertiser Webpage','Targeting' ,'Fraction of political votes from citizens(%)']
+df_columns = ['text','title', 'paid_for_by', 'page','targets', 'fr']
 
 
 
@@ -89,7 +87,7 @@ def description_card():
             html.H3("Welcome to the Political ads Dashboard"),
             html.Div(
                 id="intro",
-                children="Explore what Ads are labeled as political by citizens and advertisers.",
+                children="Explore what ads are labeled as political by citizens and advertisers.",
             ),
         ],
     )
@@ -108,9 +106,15 @@ def generate_control_card():
         children=[
             
             html.P("Dissagreement among citizens"),
+ 
+            html.Div(children='(Fraction of political votes from citizens) ', style={
+        'textAlign': 'left',
+        'color':'rgb(128,128,128)',
+    }),
+
             dcc.Dropdown(
                 id="Label_select",
-                options=[{"label": i, "value": i} for i in ads["label"].unique().tolist()],
+                options=[{"label": i, "value": i} for i in sorted(ads["label"].unique().tolist())],
                 multi=True,
                 value=[],
                                  style={'width': '350px'},
@@ -122,7 +126,7 @@ def generate_control_card():
              html.P("Social or Political issue "),
             dcc.Dropdown(
                 id="category_select",
-                options=[{"label": i, "value": i} for i in ads["fin_ctg"].unique().tolist()],
+                options=[{"label": i, "value": i} for i in sorted(ads["fin_ctg"].unique().tolist())],
                 value=[],
                                  style={'width': '350px'},
 
@@ -135,7 +139,7 @@ def generate_control_card():
             dcc.Dropdown(
                 id="advcategory_select",
                  value=[],
-                options=[{"label": i, "value": i} for i in ads["categories_1"].unique().tolist()],
+                options=[{"label": i, "value": i} for i in sorted(ads["categories_1"].unique().tolist())],
                  style={'width': '350px'},
                 multi=True,
             ),
@@ -145,32 +149,30 @@ def generate_control_card():
             dcc.Dropdown(
                 id="advertiser_select",
                  value=[],
-                options=[{"label":"All","value":"all"},*[{"label": i, "value": i} for i in ads["title"].unique().tolist()]],
+                options=[{"label":"All","value":"all"},*[{"label": i, "value": i} for i in sorted(ads["title"].unique().tolist())]],
                  style={'width': '350px'},
                 multi=True,
             ),
             html.Br(),
-            html.P("Sponsor "),
-        #     dcc.Dropdown(
-        #         id="paid_select",
-        #         value=[],
-        #         options=[{"label": i, "value": i} for i in ads["paid_for_by"].unique().tolist()],
-        #          style={'width': '400px',
-        # 'textOverflow': 'ellipsis',
-        #    'whiteSpace': 'inherit', 'line-height': '40px'},
-        #         multi=True,
-        #         #optionHeight=55
-        #     ),
+            html.P("Labeled as Political by advertiser "),
+            dcc.Checklist(
+                id="labeled_by_advertiser_select",
+                value=[],
+                options=[{"label": i, "value": i} for i in ads["paid_for_by"].unique().tolist()],
+                 style={'width': '400px',
+      },
+               labelStyle={'width': '100px','display': 'inline-block'},
+               
+                #optionHeight=55
+            ),
+             html.Br(),
+             html.P("Sponsor "),
            dcc.Dropdown(
                id="paid_select",
                         
-<<<<<<< HEAD
                          options=[{"label": i, "value": i} for i in sorted(ads["sponsor"].unique().tolist())],
-=======
-                         options=[{"label": i, "value": i} for i in ads["sponsor"].unique().tolist()],
->>>>>>> d3a323d74981c3dec8a69cf2ebb5efa4ee94b54c
                       value=[],
-                 style={'width': '350px'},
+                 style={'width': '350px' ,  'wordBreak': 'break-all'},
                 multi=True,
            ),
            html.Br(),
@@ -203,7 +205,7 @@ app.layout = html.Div(
                                             #  src='https://pbs.twimg.com/profile_images/1216754056619864064/YgAhO3fC_400x400.jpg',
                                             src='https://www.univ-grenoble-alpes.fr/uas/SITEUI/LOGO/logo+bleu.svg',
 
-                                         style={'height':'100px', 'width':'100px','textAlign': 'left'}
+                                         style={'height':'100px', 'width':'100px',"margin-top":"22px",'textAlign': 'left'}
                                          ),
 
                         ],
@@ -228,12 +230,14 @@ app.layout = html.Div(
         html.Div(
             id="left-column",
             className="four columns",
+            
             children=[description_card(), generate_control_card()]
             + [
                 html.Div(
                     ["initial child"], id="output-clientside", style={"display": "none"}
                 )
             ],
+            
         ),
         # Right column
         
@@ -242,7 +246,15 @@ app.layout = html.Div(
             className="eight columns",
             children=[
                 # Patient Volume Heatmap
-                                 html.H4("Results for Political Ads"), 
+                                html.Div( 
+                                    children=[
+                                        html.H4("Results for Political ads"),
+                                        html.P(children=[
+                                            html.Span("0 ",id="count"),
+                                            html.Span("ads found ."),
+                                            ],id="count-container")
+                                     ]),
+
 
                 # Patient Wait time by Department
                 html.Div(
@@ -290,6 +302,11 @@ page_size= 9999 ,
                                              'whiteSpace': 'normal',
                                                                                   'textAlign': 'center',
 
+                                            },
+                                              {'if': {'column_id': 'targets'},
+                                             'width': '170px',
+                                             'whiteSpace': 'normal',
+                                             'textAlign': 'left'
                                             },
                                             {'if': {'column_id': 'title'},
                                              'width': '170px'
@@ -340,13 +357,20 @@ page_size= 9999 ,
                            id='data-ressource',
                            className='five columns',
                            children=[
-                        html.B('These Ads are extracted from  :'),
-                        dcc.Markdown('''
+                          html.B('These ads are extracted from  :'),
+                          dcc.Markdown('''
                                     [The ProPublica dataset](https://www.propublica.org/datastore/dataset/political-advertisements-from-facebook)
 
                                     '''),
-                           ],
-                                    ),
+                        
+                                   
+                          html.B('Detailed measurement methodology and data analysis  :'),
+                        dcc.Markdown('''
+                                    [Understanding the Complexity of Detecting Political ads](http://lig-membres.imag.fr/gogao/papers/pol_ads_complexity_WWW2021.pdf)
+
+                                    '''),
+                         
+                                      ], ),
                                    
 
                         html.Div(
@@ -354,12 +378,12 @@ page_size= 9999 ,
                                                    className='five columns',
 
                         children =
-                        [html.B('The Political Ads Labeling is based on   :'),
+                        [html.B('Definitions of political ads :'),
                         dcc.Markdown('''
-                                    1. [Facebook Definition for Political Ads](https://www.facebook.com/business/help/167836590566506?id=288762101909005)
-                                    2. [Google Definition for Political Ads](https://support.google.com/adspolicy/answer/6014595?hl=en)
-                                    3. [Twitter Definition for Political Ads](https://business.twitter.com/en/help/ads-policies/ads-content-policies/political-content.html)
-                                    4. [TikTok Definition for Political Ads](https://ads.tiktok.com/help/article?aid=9550)
+                                    1. [Facebook Definition for Political ads](https://www.facebook.com/business/help/167836590566506?id=288762101909005)
+                                    2. [Google Definition for Political ads](https://support.google.com/adspolicy/answer/6014595?hl=en)
+                                    3. [Twitter Definition for Political ads](https://business.twitter.com/en/help/ads-policies/ads-content-policies/political-content.html)
+                                    4. [TikTok Definition for Political ads](https://ads.tiktok.com/help/article?aid=9550)
                                     '''),
                                     ],
                                     ),
@@ -372,6 +396,14 @@ page_size= 9999 ,
         ),
     ],
 )
+
+
+@app.callback(
+    Output('count', 'children'),
+[Input('my_datatable','data')],
+)
+def update_count(data):
+    return f"{len(data)} "
 
 @app.callback(
     Output('category_select', 'options'),
@@ -439,18 +471,20 @@ def update_output2(advertiser_value,advertiser_options):
         addd1= ads[ads['title'].isin([x["value"] for x in advertiser_options])]
     else:
          addd1= ads[ads['title'].isin(advertiser_value)]
-<<<<<<< HEAD
     return [{'label': i, 'value': i} for i in sorted(addd1['sponsor'].unique().tolist())]
-=======
-    return [{'label': i, 'value': i} for i in addd1['sponsor'].unique().tolist()]
->>>>>>> d3a323d74981c3dec8a69cf2ebb5efa4ee94b54c
+    
 
 @app.callback(
     Output('paid_select', 'value'),
-[Input('advertiser_select', 'value')],
+[Input('advertiser_select', 'value')]
+
 )
 def update_output22(advertiser_select):
     return []
+
+
+   
+
 
 @app.callback(
     Output('my_datatable','data'),
@@ -460,6 +494,9 @@ def update_output22(advertiser_select):
         Input('category_select','value'),
         Input('paid_select','value'),
         Input('advcategory_select','value'),
+        Input('labeled_by_advertiser_select','value'),
+
+
 
         
 
@@ -467,7 +504,7 @@ def update_output22(advertiser_select):
 
     ],
 )
-def update_output(advertiser_select, Label_select,category_select,paid_select,advcategory_select):
+def update_output(advertiser_select, Label_select,category_select,paid_select,advcategory_select,labeled_by_advertiser_select):
    
     
     ad_mask = pd.DataFrame(data={"is_empty":[len(advertiser_select) == 0 for i in range(len(ads))]})
@@ -475,7 +512,7 @@ def update_output(advertiser_select, Label_select,category_select,paid_select,ad
     category_select_mask = pd.DataFrame(data={"is_empty":[len(category_select) == 0 for i in range(len(ads))]})
     paid_select_mask = pd.DataFrame(data={"is_empty":[len(paid_select) == 0 for i in range(len(ads))]})
     advcategory_select_mask = pd.DataFrame(data={"is_empty":[len(advcategory_select) == 0 for i in range(len(ads))]})
-
+    labeled_by_advertiser_select_mask=pd.DataFrame(data={"is_empty":[len(labeled_by_advertiser_select) == 0 for i in range(len(ads))]})
 
 
 
@@ -483,7 +520,7 @@ def update_output(advertiser_select, Label_select,category_select,paid_select,ad
 
 
 
-    mask = (ad_mask["is_empty"] | ads['title'].isin(advertiser_select)) & (Label_select_mask["is_empty"] | ads['label'].isin(Label_select)) & (category_select_mask["is_empty"] | ads['fin_ctg'].isin(category_select)) & (paid_select_mask["is_empty"] | ads['sponsor'].isin(paid_select)) & (advcategory_select_mask["is_empty"] | ads['categories_1'].isin(advcategory_select))
+    mask = (ad_mask["is_empty"] | ads['title'].isin(advertiser_select)) & (Label_select_mask["is_empty"] | ads['label'].isin(Label_select)) & (category_select_mask["is_empty"] | ads['fin_ctg'].isin(category_select)) & (paid_select_mask["is_empty"] | ads['sponsor'].isin(paid_select)) & (advcategory_select_mask["is_empty"] | ads['categories_1'].isin(advcategory_select)) & (labeled_by_advertiser_select_mask["is_empty"] | ads['paid_for_by'].isin(labeled_by_advertiser_select))
  
     add= ads[mask]
     return add.to_dict(orient="records")
